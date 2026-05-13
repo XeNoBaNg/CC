@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>MERN Task Manager</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f4f7f6;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .add-btn {
+            background: #27ae60;
+            color: white;
+        }
+
+        .task-card {
+            background: #fff;
+            border-left: 5px solid #3498db;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .task-card.completed {
+            border-left-color: #2ecc71;
+            opacity: 0.6;
+        }
+
+        .task-card.completed span {
+            text-decoration: line-through;
+        }
+
+        .actions button {
+            padding: 5px 10px;
+            font-size: 12px;
+            margin-left: 5px;
+        }
+
+        .del-btn {
+            background: #e74c3c;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Task Manager</h2>
+        <div class="input-group">
+            <input type="text" id="taskInput" placeholder="Enter a new task...">
+            <button class="add-btn" onclick="addTask()">Add Task</button>
+        </div>
+        <div id="taskList"></div>
+    </div>
+
+    <script>
+        // Replace with your EC2 Public IP once deployed
+        const API = "http://YOUR_EC2_PUBLIC_IP:5000/api/tasks";
+
+        async function fetchTasks() {
+            const res = await fetch(API);
+            const tasks = await res.json();
+            const list = document.getElementById('taskList');
+            list.innerHTML = tasks.map(task => `
+            <div class="task-card ${task.completed ? 'completed' : ''}">
+                <span onclick="toggleTask('${task._id}', ${task.completed})">${task.title}</span>
+                <div class="actions">
+                    <button class="del-btn" onclick="deleteTask('${task._id}')">Delete</button>
+                </div>
+            </div>
+        `).join('');
+        }
+
+        async function addTask() {
+            const title = document.getElementById('taskInput').value;
+            if (!title) return;
+            await fetch(API, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title })
+            });
+            document.getElementById('taskInput').value = '';
+            fetchTasks();
+        }
+
+        async function toggleTask(id, currentStatus) {
+            await fetch(`${API}/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ completed: !currentStatus })
+            });
+            fetchTasks();
+        }
+
+        async function deleteTask(id) {
+            await fetch(`${API}/${id}`, { method: 'DELETE' });
+            fetchTasks();
+        }
+
+        fetchTasks();
+    </script>
+</body>
+
+</html>
