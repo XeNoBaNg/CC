@@ -1,31 +1,144 @@
 <!DOCTYPE html>
 <html>
-<head><title>MERN Store</title></head>
+
+<head>
+    <title>MERN Store Admin</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .product-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        .form-box {
+            background: #eee;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            display: block;
+            width: 95%;
+            margin-bottom: 10px;
+            padding: 8px;
+        }
+
+        button {
+            cursor: pointer;
+            padding: 8px 12px;
+            margin-right: 5px;
+        }
+
+        .btn-delete {
+            color: white;
+            background: #ff4d4d;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .btn-save {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 100%;
+        }
+    </style>
+</head>
+
 <body>
-    <h1>MERN E-Commerce</h1>
+    <h1>MERN Inventory</h1>
+
+    <div class="form-box">
+        <h3>Add / Edit Product</h3>
+        <input type="hidden" id="productId">
+        <input type="text" id="name" placeholder="Product Name">
+        <input type="number" id="price" placeholder="Price">
+        <button class="btn-save" onclick="saveProduct()">Save Product</button>
+        <button onclick="clearForm()"
+            style="width: 100%; margin-top: 5px; border: none; background: none; color: #666;">Clear</button>
+    </div>
+
     <div id="root"></div>
+
     <script>
-        const API = "http://YOUR_EC2_PUBLIC_IP:5000/api";
-        
+        const API = "http://65.2.161.75:5000/api";
+
         async function load() {
             const res = await fetch(`${API}/products`);
             const items = await res.json();
             document.getElementById('root').innerHTML = items.map(i => `
-                <div>${i.name} - $${i.price} <button onclick="buy('${i.name}')">Buy</button></div>
+                <div class="product-card">
+                    <strong>${i.name}</strong> - $${i.price}
+                    <div style="margin-top: 10px;">
+                        <button onclick="buy('${i.name}')">Buy</button>
+                        <button onclick="editProduct('${i._id}', '${i.name}', ${i.price})">Edit</button>
+                        <button class="btn-delete" onclick="deleteProduct('${i._id}')">Delete</button>
+                    </div>
+                </div>
             `).join('');
         }
-        
+
+        async function saveProduct() {
+            const id = document.getElementById('productId').value;
+            const name = document.getElementById('name').value;
+            const price = document.getElementById('price').value;
+
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${API}/products/${id}` : `${API}/products`;
+
+            await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, price })
+            });
+
+            clearForm();
+            load();
+        }
+
+        async function deleteProduct(id) {
+            if (confirm("Delete this product?")) {
+                await fetch(`${API}/products/${id}`, { method: 'DELETE' });
+                load();
+            }
+        }
+
+        function editProduct(id, name, price) {
+            document.getElementById('productId').value = id;
+            document.getElementById('name').value = name;
+            document.getElementById('price').value = price;
+            window.scrollTo(0, 0);
+        }
+
+        function clearForm() {
+            document.getElementById('productId').value = '';
+            document.getElementById('name').value = '';
+            document.getElementById('price').value = '';
+        }
+
         async function buy(name) {
             const res = await fetch(`${API}/purchase`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name })
             });
             const data = await res.json();
             alert(data.message);
         }
-        
+
         load();
     </script>
 </body>
+
 </html>
