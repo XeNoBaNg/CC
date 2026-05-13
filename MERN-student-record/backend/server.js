@@ -1,7 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config();
 
 const app = express();
 
@@ -33,8 +32,8 @@ app.get("/students", async (req, res) => {
 
 app.put("/students/:id", async (req, res) => {
     const updatedStudent = await Student.findByIdAndUpdate(
-        req.params.id,
-        req.body,
+        req.params.id, 
+        req.body, 
         { new: true }
     );
     res.json(updatedStudent);
