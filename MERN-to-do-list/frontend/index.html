@@ -2,117 +2,140 @@
 <html lang="en">
 
 <head>
-    <title>MERN Task Manager</title>
+    <meta charset="UTF-8">
+    <title>Pro Task Manager</title>
     <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #f4f7f6;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+        :root {
+            --primary: #4a90e2;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --bg: #f0f2f5;
         }
 
-        .container {
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .app-card {
             background: white;
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 500px;
+            max-width: 450px;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         }
 
         h2 {
-            color: #2c3e50;
             text-align: center;
+            color: #1a1a1a;
+            margin-bottom: 25px;
         }
 
-        .input-group {
+        .input-box {
             display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
         input {
             flex: 1;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            outline: none;
-        }
-
-        button {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
+            padding: 12px 15px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            font-size: 16px;
             transition: 0.3s;
         }
 
-        .add-btn {
-            background: #27ae60;
-            color: white;
+        input:focus {
+            border-color: var(--primary);
+            outline: none;
         }
 
-        .task-card {
-            background: #fff;
-            border-left: 5px solid #3498db;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 4px;
+        .add-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .task-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #eee;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            transition: 0.2s;
         }
 
-        .task-card.completed {
-            border-left-color: #2ecc71;
-            opacity: 0.6;
+        .task-item.done {
+            background: #f8fef9;
+            border-color: #d4edda;
+            opacity: 0.7;
         }
 
-        .task-card.completed span {
+        .task-item.done span {
             text-decoration: line-through;
+            color: #888;
         }
 
-        .actions button {
-            padding: 5px 10px;
-            font-size: 12px;
-            margin-left: 5px;
+        .btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .check-btn {
+            background: #e8f5e9;
+            color: var(--success);
+            border: none;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
         }
 
         .del-btn {
-            background: #e74c3c;
-            color: white;
+            background: #fdeaea;
+            color: var(--danger);
+            border: none;
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="container">
+    <div class="app-card">
         <h2>Task Manager</h2>
-        <div class="input-group">
-            <input type="text" id="taskInput" placeholder="Enter a new task...">
-            <button class="add-btn" onclick="addTask()">Add Task</button>
+        <div class="input-box">
+            <input type="text" id="taskInput" placeholder="What needs to be done?">
+            <button class="add-btn" onclick="addTask()">Add</button>
         </div>
         <div id="taskList"></div>
     </div>
 
     <script>
-        // Replace with your EC2 Public IP once deployed
-        const API = "http://YOUR_EC2_PUBLIC_IP:5000/api/tasks";
+        const API = "http://65.2.161.75:5000/api/tasks"; // Ensure this matches your VM IP
 
-        async function fetchTasks() {
+        async function getTasks() {
             const res = await fetch(API);
-            const tasks = await res.json();
-            const list = document.getElementById('taskList');
-            list.innerHTML = tasks.map(task => `
-            <div class="task-card ${task.completed ? 'completed' : ''}">
-                <span onclick="toggleTask('${task._id}', ${task.completed})">${task.title}</span>
-                <div class="actions">
-                    <button class="del-btn" onclick="deleteTask('${task._id}')">Delete</button>
+            const data = await res.json();
+            document.getElementById('taskList').innerHTML = data.map(t => `
+            <div class="task-item ${t.completed ? 'done' : ''}">
+                <span>${t.title}</span>
+                <div class="btns">
+                    <button class="check-btn" onclick="toggle('${t._id}')">${t.completed ? '↩️' : '✅'}</button>
+                    <button class="del-btn" onclick="del('${t._id}')">🗑️</button>
                 </div>
             </div>
         `).join('');
@@ -127,24 +150,20 @@
                 body: JSON.stringify({ title })
             });
             document.getElementById('taskInput').value = '';
-            fetchTasks();
+            getTasks();
         }
 
-        async function toggleTask(id, currentStatus) {
-            await fetch(`${API}/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ completed: !currentStatus })
-            });
-            fetchTasks();
+        async function toggle(id) {
+            await fetch(`${API}/${id}/toggle`, { method: 'PUT' });
+            getTasks();
         }
 
-        async function deleteTask(id) {
+        async function del(id) {
             await fetch(`${API}/${id}`, { method: 'DELETE' });
-            fetchTasks();
+            getTasks();
         }
 
-        fetchTasks();
+        getTasks();
     </script>
 </body>
 

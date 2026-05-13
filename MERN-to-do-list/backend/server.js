@@ -6,43 +6,37 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Replace with your MongoDB string (use %40 for @ in password)
+// Update this with your specific connection string
 const mongoURI = 'mongodb+srv://Abhi:Abhi0782%40@cluster0.m3h6jeq.mongodb.net/taskdb?retryWrites=true&w=majority';
 
-mongoose.connect(mongoURI)
-    .then(() => console.log("MongoDB Connected for Task Manager"))
-    .catch(err => console.log("DB Error:", err));
+mongoose.connect(mongoURI).then(() => console.log("DB Connected"));
 
-// Task Schema
 const Task = mongoose.model('Task', {
     title: String,
-    description: String,
     completed: { type: Boolean, default: false }
 });
 
-// Get all tasks
 app.get('/api/tasks', async (req, res) => {
-    const tasks = await Task.find();
-    res.json(tasks);
+    res.json(await Task.find());
 });
 
-// Create a task
 app.post('/api/tasks', async (req, res) => {
     const task = new Task(req.body);
     await task.save();
     res.json(task);
 });
 
-// Update a task (Toggle complete or edit text)
-app.put('/api/tasks/:id', async (req, res) => {
-    const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true });
+// The Toggle Route
+app.put('/api/tasks/:id/toggle', async (req, res) => {
+    const task = await Task.findById(req.params.id);
+    task.completed = !task.completed;
+    await task.save();
     res.json(task);
 });
 
-// Delete a task
 app.delete('/api/tasks/:id', async (req, res) => {
     await Task.findByIdAndDelete(req.params.id);
-    res.json({ message: "Task Deleted" });
+    res.json({ message: "Deleted" });
 });
 
-app.listen(5000, () => console.log("Task Backend running on port 5000"));
+app.listen(5000, () => console.log("Server running on 5000"));
