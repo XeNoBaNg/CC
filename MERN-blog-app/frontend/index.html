@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Blog App</title>
+    <style>
+        :root {
+            --primary: #8e44ad;
+            --danger: #e74c3c;
+            --bg: #f4f6f8;
+            --text: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .editor-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input,
+        textarea {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: var(--primary);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        .btn-publish {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-publish:hover {
+            opacity: 0.9;
+        }
+
+        .blog-post {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .blog-post h2 {
+            margin: 0 0 10px 0;
+            color: var(--primary);
+        }
+
+        .meta {
+            font-size: 13px;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+
+        .content {
+            line-height: 1.6;
+        }
+
+        .btn-delete {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background: #fff0f0;
+            color: var(--danger);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .btn-delete:hover {
+            background: var(--danger);
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>☁️ Cloud Tech Blog</h1>
+        <p>Share your deployment experiences</p>
+    </div>
+
+    <div class="editor-card">
+        <div class="form-group">
+            <input type="text" id="title" placeholder="Post Title" required>
+            <input type="text" id="author" placeholder="Author Name" required>
+            <textarea id="content" placeholder="Write your blog post here..." required></textarea>
+            <button class="btn-publish" onclick="publishPost()">Publish Post</button>
+        </div>
+    </div>
+
+    <div id="blogFeed">
+    </div>
+
+    <script>
+        const API_URL = "http://YOUR_NEW_EC2_IP:5000/blogs";
+
+        document.addEventListener("DOMContentLoaded", fetchBlogs);
+
+        async function fetchBlogs() {
+            try {
+                const res = await fetch(API_URL);
+                const blogs = await res.json();
+                renderBlogs(blogs);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function publishPost() {
+            const title = document.getElementById("title").value.trim();
+            const author = document.getElementById("author").value.trim();
+            const content = document.getElementById("content").value.trim();
+
+            if (!title || !author || !content) {
+                alert("All fields are required!");
+                return;
+            }
+
+            const payload = { title, author, content };
+
+            try {
+                await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                document.getElementById("title").value = "";
+                document.getElementById("author").value = "";
+                document.getElementById("content").value = "";
+
+                fetchBlogs();
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        async function deletePost(id) {
+            if (confirm("Delete this blog post?")) {
+                try {
+                    await fetch(`${API_URL}/${id}`, { method: "DELETE" });
+                    fetchBlogs();
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+        }
+
+        function renderBlogs(blogs) {
+            const feed = document.getElementById("blogFeed");
+
+            if (blogs.length === 0) {
+                feed.innerHTML = "<p style='text-align:center; color:#7f8c8d;'>No posts yet. Be the first to publish!</p>";
+                return;
+            }
+
+            feed.innerHTML = blogs.map(blog => {
+                const date = new Date(blog.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                return `
+                <div class="blog-post">
+                    <h2>${blog.title}</h2>
+                    <div class="meta">By <strong>${blog.author}</strong> • ${date}</div>
+                    <div class="content">${blog.content.replace(/\n/g, '<br>')}</div>
+                    <button class="btn-delete" onclick="deletePost('${blog._id}')">Delete</button>
+                </div>
+            `;
+            }).join('');
+        }
+    </script>
+
+</body>
+
+</html>
