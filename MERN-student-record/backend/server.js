@@ -7,9 +7,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect("mongodb+srv://Abhi:Abhi0782%40@cluster0.m3h6jeq.mongodb.net/studentDB?retryWrites=true&w=majority")
-.then(() => console.log("MongoDB Connected"))
-.catch((err) => console.log(err));
+mongoose.connect("UR_DB_URL")
+    .then(() => console.log("MongoDB Connected"))
+    .catch((err) => console.log(err));
 
 const studentSchema = new mongoose.Schema({
     name: String,
@@ -32,8 +32,8 @@ app.get("/students", async (req, res) => {
 
 app.put("/students/:id", async (req, res) => {
     const updatedStudent = await Student.findByIdAndUpdate(
-        req.params.id, 
-        req.body, 
+        req.params.id,
+        req.body,
         { new: true }
     );
     res.json(updatedStudent);

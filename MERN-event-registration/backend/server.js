@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 // Database Connection
-const mongoURI = 'mongodb+srv://Abhi:Abhi0782%40@cluster0.m3h6jeq.mongodb.net/eventDB?retryWrites=true&w=majority';
+const mongoURI = 'UR_DB_URL';
 mongoose.connect(mongoURI).then(() => console.log("Event DB Connected"));
 
 // Registration Schema

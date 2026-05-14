@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 // Update this with your specific connection string
-const mongoURI = 'mongodb+srv://Abhi:Abhi0782%40@cluster0.m3h6jeq.mongodb.net/taskdb?retryWrites=true&w=majority';
+const mongoURI = 'UR_DB_URL';
 
 mongoose.connect(mongoURI).then(() => console.log("DB Connected"));
 
